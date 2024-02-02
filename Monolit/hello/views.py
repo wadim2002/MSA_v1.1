@@ -4,6 +4,7 @@ import redis
 import pika
 import traceback, sys
 import json
+import datetime
 
 def wellcome(request):
     return HttpResponse("<h1>Wellcome my Python app!</h1>")
@@ -266,6 +267,7 @@ def post_createmq(request, userid, text):
               body='{"user" : "'+ str(userid) +'","operation" : "create_post", "text" : "'+ str(text) +'"}')
 
     connection.close()
+    logger("Poster", "create_post")
 
     return HttpResponse("Пост создан (MSA)")
 
@@ -281,6 +283,7 @@ def post_readmq(request, id):
 			  body='{"user" : "'+ str(id) +'","operation" : "get_post"}')
 
     connection.close()
+    logger("Monolit", "get_post")
     
     res = monitor_monolit()
     #sss = '{"user" : "'+ str(id) +'","operation" : "get_post"}'
@@ -299,7 +302,7 @@ def monitor_monolit():
 
     def callback(ch, method, properties, body):
         out.append (body.decode("utf-8")[:4000])
-        file = open("logmonitormonolit.txt", "w")
+        file = open("logmonitormonolit.txt", "a")
         file.writelines(out + '\n')
         file.close()
 
@@ -312,5 +315,15 @@ def monitor_monolit():
     except Exception:
         channel.stop_consuming()
         traceback.print_exc(file=sys.stdout)
+    logger("Poster", "get_post_result")
     return out
+    
+def logger(service_name, operation_name):
+    file = open("logger.txt", "a")
+    log_record = str(datetime.datetime.now()) + " *** " + service_name + " *** " + operation_name 
+    file.seek(0, 2)
+    file.writelines(log_record + '\n')
+    file.close()
+    
+    
     
