@@ -29,7 +29,7 @@ http://localhost:8000/user/post/v2/create/2/TextPostUser2
  # Создать пост (MSA)
  "user/post/v2/create/<int:userid>/<str:text>"
  # Прочитать пост (MSA)
- "user/post/v2/read/<int:id>", views.post_readmq),
+ "user/post/v2/read/<int:id>"
 
  2. Поддержание старых клиентов
  В состав проекта включен старый монолит с предыдущей версией API
