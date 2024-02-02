@@ -1,0 +1,71 @@
+version: '3'
+services:
+  db_poster:
+    image: postgres
+    volumes:
+      - $PWD/Poster/pgmaster/:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "pass"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "5432:5432"
+
+  db_monolit:
+    image: postgres
+    volumes:
+      - $PWD/Poster/pgmaster/:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "pass"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "15432:5432"
+
+  poster:
+    build: Poster
+    volumes:
+      - $PWD/Poster:/usr/src/dm_rest
+    env_file: .env
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+
+    command: >
+      sh -c "pip install --upgrade pip &&
+        pip install pika &&
+        python monitor.py &&
+        python manage.py runserver 0.0.0.0:9000"
+    
+    ports:
+      - 9000:9000
+    depends_on:
+      - db_poster
+    restart: always
+  
+  monolit:
+    build: Monolit
+    volumes:
+      - $PWD/Monolit/:/usr/src/dm_rest
+    env_file: .env
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+
+    command: >
+      sh -c "pip install --upgrade pip &&
+        pip install pika &&
+        pip install redis &&
+        python manage.py runserver 0.0.0.0:8000"
+    
+    ports:
+      - 8000:8000
+    depends_on:
+      - db_monolit
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+
+volumes:
+  poster_data:
