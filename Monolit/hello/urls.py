@@ -41,4 +41,6 @@ urlpatterns = [
     path("user/post/v2/create/<int:userid>/<str:text>", views.post_createmq),
     # Прочитать пост (MSA)
     path("user/post/v2/read/<int:id>", views.post_readmq),
+    # Получить количество НЕпрочитанных постов
+    path("user/post/noread", views.post_noread),
 ]

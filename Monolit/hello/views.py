@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 import psycopg2
-import redis
 import pika
+import rabbitpy
 import traceback, sys
 import json
 import datetime
@@ -260,11 +260,11 @@ def post_createmq(request, userid, text):
     connection = pika.BlockingConnection(conn_params)
     channel = connection.channel()
 
-    channel.queue_declare(queue='post')
+    channel.queue_declare(queue='Publish_post')
 
     channel.basic_publish(exchange='',
-			  routing_key='post',
-              body='{"user" : "'+ str(userid) +'","operation" : "create_post", "text" : "'+ str(text) +'"}')
+			  routing_key='Publish_post',
+              body='{"id": "", "user" : "'+ str(userid) +'","operation" : "Publish_post", "text" : "'+ str(text) +'" , "status" : ""}')
 
     connection.close()
     logger("Poster", "create_post")
@@ -276,18 +276,16 @@ def post_readmq(request, id):
     connection = pika.BlockingConnection(conn_params)
     channel = connection.channel()
 
-    channel.queue_declare(queue='post')
+    channel.queue_declare(queue='Post')
 
     channel.basic_publish(exchange='',
-			  routing_key='post',
+			  routing_key='Post',
 			  body='{"user" : "'+ str(id) +'","operation" : "get_post"}')
 
     connection.close()
     logger("Monolit", "get_post")
     
     res = monitor_monolit()
-    #sss = '{"user" : "'+ str(id) +'","operation" : "get_post"}'
-    #return HttpResponse("Посты пользователя "+ str(id) +" запрошены (MSA) = " + sss)
     return HttpResponse(res)
 
 def monitor_monolit():
@@ -301,10 +299,17 @@ def monitor_monolit():
     print("Waiting for messages. To exit press CTRL+C")
 
     def callback(ch, method, properties, body):
-        out.append (body.decode("utf-8")[:4000])
-        file = open("logmonitormonolit.txt", "a")
-        file.writelines(out + '\n')
-        file.close()
+        message = json.loads(body.decode("utf-8")[:4000])
+        #print('value = ' + message['value'])
+        out.append (message)
+        #print (str(out['value']))
+
+        
+        
+        #out.append (body.decode("utf-8")[:4000])
+        #file = open("logmonitormonolit.txt", "a")
+        #file.writelines(out + '\n')
+        #file.close()
 
     channel.basic_consume('OUT', callback, auto_ack=True)
 
@@ -325,5 +330,77 @@ def logger(service_name, operation_name):
     file.writelines(log_record + '\n')
     file.close()
     
+def post_noread(request):
+    conn_params = pika.ConnectionParameters('rabbitmq', 5672)
+    connection = pika.BlockingConnection(conn_params)
+    channel = connection.channel()
+
+    channel.queue_declare(queue='Publish_post')
+
+    channel.basic_publish(exchange='',
+			  routing_key='Publish_post',
+              body='{"id": "", "user" : "0","operation" : "CounterNoReadPost", "text" : "-" , "status" : "-"}')
+
+    connection.close()
+    print("Monolit send request for count message")
     
-    
+    out=[]
+    # URL для соединения
+    url = 'amqp://guest:guest@rabbitmq:5672/%2F'
+
+    # Открытие соединения RabbitMQ
+    connection = rabbitpy.Connection(url)            # Создание нового объекта соединения, подключение к RabbitMQ
+
+    # открытие канала для взаимодействия с RabbitMQ
+    channel = connection.channel('OUT')                   # Открытие канала для взаимодействия
+
+    # Создание объекта для взаимодействия с очередью
+    queue = rabbitpy.Queue(channel, 'OUT')       # Создание нового объекта очереди для получения сообщений
+
+    # Пока в данной очереди имеются сообщения, идёт его опрос с применением Basic.Get
+    while len(queue) > 0:                         # цикл до тех пор, пока в очереди имеются сообщения
+        message = queue.get()                        # выборка очередного сообщения
+        #print('Message:')
+        #print(' ID: %s' % message.properties['message_id'])                # Получение сообщения из обрабатываемой очереди
+        #print(' Time: %s' % message.properties['timestamp'].isoformat())   # Печать штампа времени свойства отформатированного в виде штампа времени ISO 8601 
+        print(' Body: %s' % message.body)            # Печать тела сообщения
+        if json.loads(message.body)['operation']=='CounterNoReadPost':
+            out.append(json.loads(message.body)['value'])
+            message.ack() 
+    #res = monitor_orkestrator()
+    print("Monolit end scan request for count message")
+    #print (res)
+    return HttpResponse('Не прочитано сообщений ' + str(out[0]) + ' шт.')
+
+def monitor_orkestrator():
+    out = []
+    conn_params = pika.ConnectionParameters('rabbitmq', 5672)
+    connection = pika.BlockingConnection(conn_params)
+    channel = connection.channel()
+
+    channel.queue_declare(queue='OUT', durable=False)
+
+    print("Monolit waiting Statistic")
+
+    def callback(ch, method, properties, body):
+        val = json.loads(body.decode("utf-8")[:4000])['value']
+        out.append(val)
+        return out
+        #print(out)
+        #message = body.decode("utf-8")[:4000]
+        
+        #body_str = json.loads(message)
+        #print('=============' +  body_str)
+        #out.append(message)
+        #print(out)
+    channel.basic_consume('OUT', callback, auto_ack=True)
+    #print(out)
+
+    try:
+        channel.start_consuming()
+    except KeyboardInterrupt:
+        channel.stop_consuming()
+    except Exception:
+        channel.stop_consuming()
+        traceback.print_exc(file=sys.stdout)
+    return out

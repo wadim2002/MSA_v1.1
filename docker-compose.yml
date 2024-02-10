@@ -1,5 +1,11 @@
 version: '3'
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+
   db_poster:
     image: postgres
     volumes:
@@ -29,19 +35,17 @@ services:
     env_file: .env
     environment:
       - RABBITMQ_HOST=rabbitmq
-
     command: >
       sh -c "pip install --upgrade pip &&
         pip install pika &&
         python monitor.py &&
-        python manage.py runserver 0.0.0.0:9000"
-    
+        python manage.py runserver 0.0.0.0:9000"    
     ports:
       - 9000:9000
     depends_on:
       - db_poster
     restart: always
-  
+
   monolit:
     build: Monolit
     volumes:
@@ -49,23 +53,44 @@ services:
     env_file: .env
     environment:
       - RABBITMQ_HOST=rabbitmq
-
     command: >
       sh -c "pip install --upgrade pip &&
         pip install pika &&
-        pip install redis &&
+        pip install rabbitpy &&
         python manage.py runserver 0.0.0.0:8000"
-    
     ports:
       - 8000:8000
     depends_on:
       - db_monolit
     restart: always
 
-  rabbitmq:
-    image: rabbitmq:3-management
+  orkestrator:
+    build: Orkestrator
+    volumes:
+      - $PWD/Orkestrator:/usr/src/dm_rest
+    env_file: .env
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    command: >
+      sh -c "pip install --upgrade pip &&
+        pip install pika &&
+        pip install tarantool &&
+        python monitor.py &&
+        python manage.py runserver 0.0.0.0:9900"    
     ports:
-      - 5672:5672
+      - 9900:9900
+    depends_on:
+      - tarantooldb
+    restart: always
+
+
+  tarantooldb:
+    image: "tarantool/tarantool:1"
+    volumes:
+      - $PWD/Orkestrator/tarantooldb/:/var/lib/tarantool
+    ports:
+      - 3301:3301
 
 volumes:
   poster_data:
+  tarantooldb_data:

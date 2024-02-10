@@ -35,3 +35,18 @@ def post_writemq(text):
     connection.close()
     
     return True
+
+# Функция по отправке постов
+def post_writemqSaga(text):
+    # Устанавливаем соединение с сервером RabbitMQ
+    connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq',5672))
+    channel = connection.channel()
+    
+    # Объявляем очередь, в которую будем отправлять сообщения
+    channel.queue_declare(queue='Publish_post', durable=False)
+    
+    # Отправляем сообщение в очередь
+    channel.basic_publish(exchange='', routing_key='Publish_post', body=text)    
+    connection.close()
+    
+    return True

@@ -2,13 +2,13 @@ import psycopg2
 import json
 
 # Функция по созданию постов
-def sql_post_insert(userid,text):
+def sql_post_insert(userid,text,id):
     # подключение к БД
     conn = psycopg2.connect(dbname="postgres", user="postgres", password="pass", host="db_poster", port="5432")
     # создание курсора
     cursor = conn.cursor()
     # строка запроса
-    query = "INSERT INTO post (id_user, text) VALUES ('" + str(userid) + "','" + text + "')"
+    query = "INSERT INTO post (id_user, text, uid) VALUES ('" + str(userid) + "','" + text + " ',' " + id + "' )"
     cursor.execute(query)
     conn.commit()  
 
@@ -33,4 +33,4 @@ def sql_post_read(id):
     cursor.close()
     conn.close()
 
-    return json.dumps(rows)
+    return rows

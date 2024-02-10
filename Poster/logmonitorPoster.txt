@@ -1,0 +1,8 @@
+{"id": " " 3f4ba670-27aa-4241-aa98-5eccc53889c3"]]", "user" : "[[8","operation" : "Readed_post", "text" : " "Text1PostUser140 "" , "status" : "Readed" }
+{"id": "8a88db3f-0f95-4fbe-a1e0-31721c65dfc0", "user" : "1","operation" : "Reading_post", "text" : "Text1PostUser1" , "status" : "Reading"}
+{"id": "c795d783-9d85-45d9-a731-22d8a3bf1c9a", "user" : "1","operation" : "Reading_post", "text" : "Text1PostUser1" , "status" : "Reading"}
+{"id": "e7a21b75-9f96-4f9a-8817-5e260b16a0d3", "user" : "555","operation" : "Reading_post", "text" : "Text1PostUser555" , "status" : "Reading"}
+{"id": "4857bfa9-2eaa-4e02-b81d-b5f353381e8d", "user" : "556","operation" : "Reading_post", "text" : "Text1PostUser556" , "status" : "Reading"}
+{"id": "1cb29f59-b1e7-42aa-aea4-5a347cc78a69", "user" : "557","operation" : "Reading_post", "text" : "Text1PostUser557" , "status" : "Reading"}
+{"id": "965945b3-7a4e-47dc-b02c-09d9fac7dd94", "user" : "558","operation" : "Reading_post", "text" : "Text1PostUser558" , "status" : "Reading"}
+{"id": "80192f7f-31eb-41b5-bdad-bc6dfc0b2a07", "user" : "560","operation" : "Reading_post", "text" : "Text1PostUser560" , "status" : "Reading"}
