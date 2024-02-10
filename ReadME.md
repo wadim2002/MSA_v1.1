@@ -1,4 +1,4 @@
-docker exec -i -t b1a21364e56d9c3d52f885f8753b7ebeca724dcf4088253f479e6e94deb8d620 console
+docker exec -i -t Контейнер с Тарантул console
 
 s = box.schema.space.create('counter')
 
